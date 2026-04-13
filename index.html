@@ -8,24 +8,26 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
         :root {
             --azul: #1565c0;
             --azul-claro: #1a73e8;
             --azul-bg: #e8f0fe;
             --verde: #2e7d32;
             --verde-hover: #1b5e20;
+            --rojo: #c62828;
+            --rojo-hover: #b71c1c;
             --amarillo-bg: #fef9e7;
             --amarillo-borde: #f9e79f;
             --gris-texto: #444;
             --blanco: #fff;
             --sombra: 0 4px 15px rgba(0,0,0,0.1);
         }
-
         body {
             font-family: 'Nunito', sans-serif;
             background: linear-gradient(-45deg, #e3f2fd, #bbdefb, #fff9c4, #f8bbd0);
@@ -34,14 +36,11 @@
             min-height: 100vh;
             padding: 20px;
         }
-
         @keyframes gradientBG {
             0%   { background-position: 0% 50%; }
             50%  { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-
-        /* ============ CONTENEDOR ============ */
         .container {
             max-width: 1100px;
             margin: auto;
@@ -52,9 +51,7 @@
             text-align: center;
             backdrop-filter: blur(6px);
         }
-
         .logo { display: block; margin: 0 auto 18px; width: 110px; border-radius: 10px; }
-
         .subtitulo {
             font-family: 'Poppins', sans-serif;
             font-size: 22px;
@@ -64,8 +61,6 @@
             text-transform: uppercase;
             letter-spacing: 1.5px;
         }
-
-        /* ============ BADGE FECHA / SEMANA ============ */
         .semana-info {
             background: var(--azul-bg);
             padding: 8px 22px;
@@ -77,8 +72,6 @@
             font-weight: 700;
             border: 1px solid #bbdefb;
         }
-
-        /* ============ PANEL FORMULARIO ============ */
         .panel-asistencia {
             background: var(--amarillo-bg);
             border: 1px solid var(--amarillo-borde);
@@ -87,14 +80,12 @@
             margin-bottom: 16px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 14px;
             margin-bottom: 14px;
         }
-
         select, input[type="text"] {
             padding: 11px 14px;
             border-radius: 8px;
@@ -107,10 +98,7 @@
             transition: border-color 0.2s;
         }
         select:focus, input[type="text"]:focus { border-color: var(--azul-claro); }
-
-        /* ============ BOTONES ============ */
         button { font-family: 'Nunito', sans-serif; cursor: pointer; transition: 0.25s; border: none; }
-
         .btn-success {
             background: var(--verde);
             color: var(--blanco);
@@ -125,8 +113,6 @@
         }
         .btn-success:hover { background: var(--verde-hover); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         .btn-success:disabled { background: #aaa; cursor: not-allowed; transform: none; }
-
-        /* ============ ACCESO ADMIN ============ */
         .btn-admin {
             background: none;
             border: none;
@@ -137,8 +123,6 @@
             padding: 8px;
         }
         .btn-admin:hover { color: var(--azul-claro); }
-
-        /* ============ PANEL ADMIN ============ */
         #panelAdmin {
             margin-top: 30px;
             padding: 28px;
@@ -155,8 +139,6 @@
             margin-bottom: 20px;
             font-size: 18px;
         }
-
-        /* ============ FILTROS ============ */
         .filtro-mensual {
             margin: 10px 0 20px;
             background: #f1f8ff;
@@ -187,7 +169,7 @@
         }
         .btn-imprimir:hover { background: var(--azul); }
 
-        /* ============ ESTADÍSTICAS RÁPIDAS ============ */
+        /* === STATS GENERALES === */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -209,10 +191,54 @@
         }
         .stat-card .stat-label { font-size: 12px; color: #555; font-weight: 600; margin-top: 2px; }
 
-        /* ============ GRÁFICO ============ */
-        .grafico-wrap { height: 240px; margin-bottom: 28px; background: #fafafa; border-radius: 10px; padding: 10px; border: 1px solid #eee; }
+        /* === STATS POR PERSONA === */
+        .stats-personal {
+            margin-bottom: 22px;
+            background: #f8fbff;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #bbdefb;
+        }
+        .stats-personal h4 {
+            color: var(--azul);
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        .stats-personal-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .stat-persona-badge {
+            background: white;
+            border: 1.5px solid #90caf9;
+            border-radius: 20px;
+            padding: 6px 12px 6px 10px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #333;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+        .stat-persona-badge .cnt {
+            background: var(--azul);
+            color: white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
 
-        /* ============ TABLA ============ */
+        .grafico-wrap { height: 240px; margin-bottom: 28px; background: #fafafa; border-radius: 10px; padding: 10px; border: 1px solid #eee; }
         .tabla-container { overflow-x: auto; margin-top: 10px; border-radius: 10px; border: 1px solid #e0e0e0; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         thead th {
@@ -230,7 +256,6 @@
         tr:last-child td { border-bottom: none; }
         tr:nth-child(even) td { background-color: #f8f9fa; }
         tr:hover td { background-color: #e8f0fe; transition: 0.15s; }
-
         .badge-grado {
             background: var(--azul-bg);
             color: var(--azul);
@@ -241,16 +266,23 @@
             white-space: nowrap;
         }
 
-        /* ============ SIN DATOS ============ */
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #aaa;
-            font-size: 15px;
+        /* === BOTÓN ELIMINAR === */
+        .btn-eliminar {
+            background: var(--rojo);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
         }
-        .empty-state .icon { font-size: 40px; display: block; margin-bottom: 8px; }
+        .btn-eliminar:hover { background: var(--rojo-hover); transform: scale(1.05); }
 
-        /* ============ BOTÓN CERRAR ============ */
+        .empty-state { text-align: center; padding: 40px; color: #aaa; font-size: 15px; }
+        .empty-state .icon { font-size: 40px; display: block; margin-bottom: 8px; }
         .btn-cerrar {
             display: block;
             margin: 22px auto 0;
@@ -262,8 +294,6 @@
             font-size: 14px;
         }
         .btn-cerrar:hover { background: #333; }
-
-        /* ============ TOAST ============ */
         #toast {
             position: fixed;
             bottom: 30px;
@@ -282,12 +312,9 @@
         }
         #toast.show { display: block; }
         @keyframes fadeInUp { from { opacity:0; transform: translateX(-50%) translateY(10px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
-
-        /* ============ SPINNER ============ */
         .spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ============ PRINT ============ */
         @media print {
             body { background: white !important; animation: none; padding: 0; }
             .container { box-shadow: none; padding: 10px; }
@@ -295,8 +322,9 @@
             .btn-admin, .btn-cerrar, .btn-imprimir, .panel-asistencia, .semana-info, .logo, .subtitulo { display: none !important; }
             .filtro-mensual button { display: none !important; }
             #panelAdmin { display: block !important; }
+            .btn-eliminar { display: none !important; }
+            th:last-child, td:last-child { display: none !important; }
         }
-
         @media (max-width: 600px) {
             .subtitulo { font-size: 16px; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -308,45 +336,43 @@
 <div class="container">
     <img src="https://raw.githubusercontent.com/rreyesyangali-droid/reserva-crt/main/logo.jpg" class="logo" alt="Logo Institución">
     <div class="subtitulo">📋 Registro de Atención Personal 2026</div>
-
     <div class="semana-info" id="fecha-actual">📅 Cargando...</div>
 
-    <!-- ===== FORMULARIO ===== -->
     <div class="panel-asistencia">
         <div class="form-grid">
             <select id="docente">
                 <option value="">👤 Seleccione personal...</option>
-                <option>SEMINARIO HUERTA PILAR ELISA</option>
-                <option>SARANGO PEREZ SUSY MAGALY</option>
-                <option>DIOSES GARAY MILAGROS MAGDALENA</option>
+                <option>SEMINARIO HUERTA PILAR</option>
+                <option>SARANGO PEREZ MAGALY</option>
+                <option>DIOSES GARAY MILAGROS</option>
                 <option>CAISAHUANA MAYTA FLOR DE MARIA</option>
-                <option>MENA MENDOZA ESTHER PATRICIA</option>
-                <option>CONTRERAS CHANHUALLA SANDRA BEATRIZ</option>
-                <option>PAUCAR FLORES ROSALVINA BEATRIZ</option>
-                <option>LAZARES PEREZ ANA ROSALBINA</option>
-                <option>CARRASCO ARIAS ANA CECILIA</option>
-                <option>TASAYCO LUYO LISSET KATHERINE</option>
+                <option>MENA MENDOZA PATRICIA</option>
+                <option>CONTRERAS CHANHUALLA SANDRA</option>
+                <option>PAUCAR FLORES BEATRIZ</option>
+                <option>LAZARES PEREZ ANA</option>
+                <option>CARRASCO ARIAS ANA</option>
+                <option>TASAYCO LUYO LISSET</option>
                 <option>RODRIGUEZ MOLINA MARY LUZ</option>
-                <option>MALDONADO CUETO PAOLA VERONICA</option>
+                <option>MALDONADO CUETO PAOLA</option>
                 <option>PACHERRES LEON JUANA</option>
-                <option>CASTRO LLANTERHUAY KATHERIN ISABEL</option>
-                <option>TARMEÑO PASCO JAVIER EDUARDO</option>
+                <option>CASTRO LLANTERHUAY KATHERIN</option>
+                <option>TARMEÑO PASCO JAVIER</option>
                 <option>QUISPE CCUNO MARTHA</option>
-                <option>PAUCARCAJA RICSE FELIX JUSTO</option>
-                <option>MALASQUEZ CHUMPITAZI OFELIA LUSMELIDA</option>
-                <option>CAMPOS MARTOS MILAGROS ISABEL</option>
+                <option>PAUCARCAJA RICSE FELIX</option>
+                <option>MALASQUEZ CHUMPITAZI OFELIA</option>
+                <option>CAMPOS MARTOS MILAGROS</option>
                 <option>CABRERA GUERRA BETHY</option>
-                <option>CASTRO BARDALES FLORIZA MARGOT</option>
-                <option>MENDOZA PAREJA NICOLAS EPIFANIO</option>
-                <option>ALCANTARA SANDOVAL JOSE GONZALO</option>
+                <option>CASTRO BARDALES FLORIZA</option>
+                <option>MENDOZA PAREJA NICOLAS</option>
+                <option>ALCANTARA SANDOVAL JOSE</option>
                 <option>CUEVA CARDENAS ROGER</option>
                 <option>BRAVO RAYMONDI MARISOL</option>
-                <option>JIMENEZ BONIFACIO ROSAMEL TANIA</option>
-                <option>LIMACHE CORTEZ MARIA ELENA</option>
+                <option>JIMENEZ BONIFACIO ROSAMEL</option>
+                <option>LIMACHE CORTEZ MARIA</option>
                 <option>CCAJMA QUISPE ELIZABETH</option>
                 <option>ZAMUDIO SOLORZANO DANIEL</option>
                 <option>PIÑAN ARIZA CARMEN</option>
-                <option>SOSA QUISPE EFRAIN ABEL</option>
+                <option>SOSA QUISPE EFRAIN</option>
                 <option>DOCENTE</option>
                 <option>DIRECTIVOS</option>
                 <option>PSICÓLOGO (A)</option>
@@ -358,12 +384,12 @@
                 <option>DIRECTIVOS</option>
                 <option>PSICÓLOGO (A)</option>
                 <option>VISITA EXTERNA</option>
-                <option>1° GRADO</option>
-                <option>2° GRADO</option>
-                <option>3° GRADO</option>
-                <option>4° GRADO</option>
-                <option>5° GRADO</option>
-                <option>6° GRADO</option>
+                <option>1°</option>
+                <option>2°</option>
+                <option>3°</option>
+                <option>4°</option>
+                <option>5°</option>
+                <option>6°</option>
             </select>
 
             <select id="seccion">
@@ -384,27 +410,31 @@
         <button class="btn-success" id="btnRegistrar" onclick="registrarAtencion()">✅ REGISTRAR ATENCIÓN</button>
     </div>
 
-    <!-- ===== ACCESO ADMIN ===== -->
     <div style="margin-top: 40px; border-top: 1px solid #e0e0e0; padding-top: 18px;">
         <button class="btn-admin" onclick="checkAdmin()">🔐 Acceso Docente PIP — Generar Informe Mensual</button>
     </div>
 
-    <!-- ===== PANEL ADMIN ===== -->
     <div id="panelAdmin">
-        <h3>📊 INFORME MENSUAL DE ATENCIONES — 2026</h3>
+        <h3>📊 INFORME MENSUAL DE ATENCIÓN PERSONAL — 2026</h3>
 
         <div class="filtro-mensual">
             <label>📅 Mes:</label>
             <input type="month" id="mesFiltro" min="2026-01" max="2026-12" onchange="generarReporteMensual()">
-            <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir / PDF</button>
+            <button class="btn-imprimir" onclick="descargarPDF()">📥 Descargar PDF</button>
         </div>
 
-        <!-- Estadísticas rápidas -->
-        <div class="stats-grid" id="statsGrid">
+        <!-- Estadísticas generales -->
+        <div class="stats-grid">
             <div class="stat-card"><div class="stat-num" id="statTotal">—</div><div class="stat-label">Total Atenciones</div></div>
             <div class="stat-card"><div class="stat-num" id="statPersonas">—</div><div class="stat-label">Personas Distintas</div></div>
             <div class="stat-card"><div class="stat-num" id="statDias">—</div><div class="stat-label">Días con Atención</div></div>
             <div class="stat-card"><div class="stat-num" id="statSemana">—</div><div class="stat-label">Prom. x Semana</div></div>
+        </div>
+
+        <!-- Estadística por persona: Nombre Grado Sección -->
+        <div class="stats-personal">
+            <h4>👥 Atenciones por persona</h4>
+            <div class="stats-personal-grid" id="statsPersonal"></div>
         </div>
 
         <!-- Gráfico -->
@@ -419,7 +449,8 @@
                         <th>Personal</th>
                         <th style="width:130px">Grado / Secc.</th>
                         <th>Tema / Motivo</th>
-                        <th>Observaciones</th>
+                        <th>Recursos</th>
+                        <th style="width:90px;text-align:center">Acción</th>
                     </tr>
                 </thead>
                 <tbody id="tablaCuerpo"></tbody>
@@ -432,24 +463,17 @@
 
 <div id="toast"></div>
 
-<!-- ===== FIREBASE CONFIG — reemplaza con variables de entorno en producción ===== -->
 <script>
-// ⚠️ IMPORTANTE: Configura reglas en Firebase Console para proteger tu base de datos.
-// Reglas recomendadas (Realtime Database → Reglas):
-// {
-//   "rules": {
-//     "atenciones_personales": {
-//       ".read": false,       // solo via admin con auth
-//       ".write": true        // cualquiera puede escribir (registrar)
-//     }
-//   }
-// }
-
+// ✅ FIREBASE CONFIG — Proyecto: registro-de-atencion-personal
 const firebaseConfig = {
-    apiKey: "AIzaSyAtUo0_SaYsJYhBSJ-CwW1GU1Y4Iemq92M",
-    authDomain: "reserva-crt.firebaseapp.com",
-    projectId: "reserva-crt",
-    databaseURL: "https://reserva-crt-default-rtdb.firebaseio.com"
+    apiKey: "AIzaSyDNJSOq3DnubRvLgKfk87sAEbfVHiZLLMw",
+    authDomain: "registro-de-atencion-personal.firebaseapp.com",
+    databaseURL: "https://registro-de-atencion-personal-default-rtdb.firebaseio.com",
+    projectId: "registro-de-atencion-personal",
+    storageBucket: "registro-de-atencion-personal.firebasestorage.app",
+    messagingSenderId: "547217116310",
+    appId: "1:547217116310:web:8ce2407510dbf2282a06b7",
+    measurementId: "G-Y0ZWZ2FTVT"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -465,11 +489,11 @@ actualizarFecha();
 
 // ===== REGISTRAR ATENCIÓN =====
 function registrarAtencion() {
-    const doc  = document.getElementById("docente").value.trim();
-    const gra  = document.getElementById("grado").value.trim();
-    const sec  = document.getElementById("seccion").value.trim();
-    const tem  = document.getElementById("tema").value.trim();
-    const rec  = document.getElementById("recursos").value.trim();
+    const doc = document.getElementById("docente").value.trim();
+    const gra = document.getElementById("grado").value.trim();
+    const sec = document.getElementById("seccion").value.trim();
+    const tem = document.getElementById("tema").value.trim();
+    const rec = document.getElementById("recursos").value.trim();
 
     if (!doc) { toast("⚠️ Seleccione el personal"); return; }
     if (!gra) { toast("⚠️ Seleccione el grado"); return; }
@@ -481,59 +505,67 @@ function registrarAtencion() {
     btn.innerHTML = '<span class="spinner"></span> Guardando...';
 
     const d = new Date();
-    // Mes en formato YYYY-MM (solo 2026)
-    const mesActual    = d.toISOString().slice(0, 7);
+    const mesActual     = d.toISOString().slice(0, 7);
     const fechaCompleta = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
     const horaCompleta  = d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
 
-    const nuevaAtencion = {
-        docente:      doc,
-        grado:        gra,
-        seccion:      sec,
-        tema:         tem,
-        observaciones: rec || "—",
-        fecha:        fechaCompleta,
-        hora:         horaCompleta,
-        mes:          mesActual,
-        timestamp:    Date.now()
-    };
+    db.ref('atenciones_personales').push({
+        docente: doc, grado: gra, seccion: sec, tema: tem,
+        observaciones: rec || "—", fecha: fechaCompleta,
+        hora: horaCompleta, mes: mesActual, timestamp: Date.now()
+    })
+    .then(() => {
+        toast("✅ Atención registrada correctamente");
+        document.getElementById("tema").value = "";
+        document.getElementById("recursos").value = "";
+    })
+    .catch(err => { console.error(err); toast("❌ Error al guardar. Revise su conexión."); })
+    .finally(() => { btn.disabled = false; btn.innerHTML = "✅ REGISTRAR ATENCIÓN"; });
+}
 
-    db.ref('atenciones_personales').push(nuevaAtencion)
-        .then(() => {
-            toast("✅ Atención registrada correctamente");
-            document.getElementById("tema").value = "";
-            document.getElementById("recursos").value = "";
-        })
-        .catch(err => {
-            console.error(err);
-            toast("❌ Error al guardar. Revise su conexión.");
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = "✅ REGISTRAR ATENCIÓN";
-        });
+// ===== ELIMINAR REGISTRO (solo admin) =====
+function eliminarRegistro(key, desc) {
+    const pass = prompt("🔐 Ingrese la clave de administrador para eliminar:");
+    if (!pass) return;
+    if (pass !== "Yarvin24") { alert("❌ Clave incorrecta. No se puede eliminar."); return; }
+    if (!confirm(`¿Está seguro de eliminar este registro?\n\n${desc}`)) return;
+    db.ref('atenciones_personales/' + key).remove()
+        .then(() => { toast("🗑️ Registro eliminado correctamente"); generarReporteMensual(); })
+        .catch(err => { console.error(err); toast("❌ Error al eliminar"); });
+}
+
+// ===== OBTENER PRIMER NOMBRE =====
+// Los nombres tienen formato: "APELLIDO1 APELLIDO2 NOMBRE"
+// La 3ra palabra es el primer nombre
+function primerNombre(nombreCompleto) {
+    const partes = nombreCompleto.trim().split(/\s+/);
+    if (partes.length >= 3) return partes[2];
+    return partes[partes.length - 1];
+}
+
+// ===== ABREVIAR GRADO =====
+function abreviarGrado(grado) {
+    return grado
+        .replace('DIRECTIVOS', 'Dir.')
+        .replace('PSICÓLOGO (A)', 'Psic.')
+        .replace('VISITA EXTERNA', 'Visita');
+}
+
+// ===== ETIQUETA: Nombre Grado Sección =====
+function etiquetaPersona(r) {
+    const nombre = primerNombre(r.docente);
+    const grado  = abreviarGrado(r.grado);
+    const especial = ['DIRECTIVOS','PSICÓLOGO (A)','VISITA EXTERNA'].includes(r.seccion);
+    return especial ? `${nombre} ${grado}` : `${nombre} ${grado} ${r.seccion}`;
 }
 
 // ===== ACCESO ADMIN =====
-// Hash simple para no exponer la clave en texto plano
-async function hashStr(str) {
-    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
-    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-// Hash de "Yarvin24" — cámbialo si cambias la clave
-const ADMIN_HASH = "b2a3d3e8a1c4e7f9b2a3d3e8a1c4e7f9b2a3d3e8a1c4e7f9b2a3d3e8a1c4e7f9"; 
-// Para regenerar el hash: ejecuta en consola: hashStr("TuNuevaClave").then(console.log)
-
 async function checkAdmin() {
     const pass = prompt("Ingrese clave de administrador:");
     if (!pass) return;
-    const h = await hashStr(pass);
-    // Comparación: acepta la clave correcta
-    // Nota: para mayor seguridad usa Firebase Authentication
     if (pass === "Yarvin24") {
         document.getElementById("panelAdmin").style.display = "block";
         const hoy = new Date().toISOString().slice(0, 7);
-        // Restringir solo a meses de 2026
         document.getElementById("mesFiltro").value = hoy.startsWith("2026") ? hoy : "2026-01";
         generarReporteMensual();
         setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
@@ -551,118 +583,195 @@ function cerrarAdmin() {
 let miChart = null;
 
 function generarReporteMensual() {
-    const mesSeleccionado = document.getElementById("mesFiltro").value;
-    if (!mesSeleccionado) return;
-
-    // Validar que sea 2026
-    if (!mesSeleccionado.startsWith("2026")) {
-        toast("⚠️ Solo se muestran datos del año 2026");
-        return;
-    }
+    const mes = document.getElementById("mesFiltro").value;
+    if (!mes) return;
+    if (!mes.startsWith("2026")) { toast("⚠️ Solo se muestran datos del año 2026"); return; }
 
     const tabla = document.getElementById("tablaCuerpo");
-    tabla.innerHTML = "<tr><td colspan='5' style='text-align:center;padding:20px;color:#aaa'>⏳ Cargando datos...</td></tr>";
-
-    // Reiniciar stats
+    tabla.innerHTML = "<tr><td colspan='6' style='text-align:center;padding:20px;color:#aaa'>⏳ Cargando datos...</td></tr>";
     ["statTotal","statPersonas","statDias","statSemana"].forEach(id => document.getElementById(id).textContent = "—");
+    document.getElementById("statsPersonal").innerHTML = "";
 
-    db.ref('atenciones_personales')
-        .orderByChild('timestamp')
-        .once('value', snap => {
-            const data = snap.val() || {};
+    db.ref('atenciones_personales').orderByChild('timestamp').once('value', snap => {
+        const data = snap.val() || {};
 
-            // Filtrar solo el mes seleccionado
-            const registros = Object.values(data)
-                .filter(r => r.mes === mesSeleccionado)
-                .sort((a, b) => b.timestamp - a.timestamp); // más reciente arriba
+        const registros = Object.entries(data)
+            .filter(([, r]) => r.mes === mes)
+            .sort((a, b) => b[1].timestamp - a[1].timestamp)
+            .map(([key, r]) => ({ ...r, _key: key }));
 
-            // ---- ESTADÍSTICAS ----
-            const totalAtenciones = registros.length;
-            const personasUnicas  = new Set(registros.map(r => r.docente)).size;
-            const diasUnicos      = new Set(registros.map(r => r.fecha)).size;
-            const promSemana      = diasUnicos > 0 ? (totalAtenciones / Math.ceil(diasUnicos / 5)).toFixed(1) : 0;
+        // Estadísticas generales
+        const totalAtenciones = registros.length;
+        const personasUnicas  = new Set(registros.map(r => r.docente)).size;
+        const diasUnicos      = new Set(registros.map(r => r.fecha)).size;
+        const promSemana      = diasUnicos > 0 ? (totalAtenciones / Math.ceil(diasUnicos / 5)).toFixed(1) : 0;
 
-            document.getElementById("statTotal").textContent    = totalAtenciones;
-            document.getElementById("statPersonas").textContent = personasUnicas;
-            document.getElementById("statDias").textContent     = diasUnicos;
-            document.getElementById("statSemana").textContent   = promSemana;
+        document.getElementById("statTotal").textContent    = totalAtenciones;
+        document.getElementById("statPersonas").textContent = personasUnicas;
+        document.getElementById("statDias").textContent     = diasUnicos;
+        document.getElementById("statSemana").textContent   = promSemana;
 
-            // ---- TABLA ----
-            if (registros.length === 0) {
-                tabla.innerHTML = `<tr><td colspan="5">
-                    <div class="empty-state">
-                        <span class="icon">📭</span>
-                        No hay registros para este mes.
-                    </div>
-                </td></tr>`;
-            } else {
-                tabla.innerHTML = registros.map(reg => `
-                    <tr>
-                        <td>
-                            <b>${reg.fecha}</b><br>
-                            <small style="color:#888">${reg.hora}</small>
-                        </td>
-                        <td><b>${reg.docente}</b></td>
-                        <td><span class="badge-grado">${reg.grado}</span><br><small>${reg.seccion}</small></td>
-                        <td>${reg.tema}</td>
-                        <td style="color:#666">${reg.observaciones}</td>
-                    </tr>
-                `).join('');
-            }
-
-            // ---- GRÁFICO: conteo por docente ----
-            const conteoGrafico = {};
-            registros.forEach(r => {
-                // Mostrar solo el primer apellido para el gráfico
-                const etiqueta = r.docente.split(' ')[0];
-                conteoGrafico[etiqueta] = (conteoGrafico[etiqueta] || 0) + 1;
-            });
-
-            // Ordenar de mayor a menor
-            const etiquetasOrdenadas = Object.entries(conteoGrafico)
-                .sort((a, b) => b[1] - a[1])
-                .map(e => e[0]);
-            const valoresOrdenados = etiquetasOrdenadas.map(e => conteoGrafico[e]);
-
-            const ctx = document.getElementById('graficoAsistencia').getContext('2d');
-            if (miChart) miChart.destroy();
-
-            miChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: etiquetasOrdenadas,
-                    datasets: [{
-                        label: 'Atenciones en el mes',
-                        data: valoresOrdenados,
-                        backgroundColor: etiquetasOrdenadas.map((_, i) =>
-                            `hsl(${210 + i * 15}, 70%, ${55 + i * 3}%)`
-                        ),
-                        borderRadius: 6,
-                        borderSkipped: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: ctx => ` ${ctx.parsed.y} atención(es)`
-                            }
-                        }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f0f0f0' } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-        })
-        .catch(err => {
-            console.error(err);
-            tabla.innerHTML = "<tr><td colspan='5' style='text-align:center;color:red'>❌ Error al cargar los datos</td></tr>";
+        // Estadística por persona (Nombre Grado Sección)
+        const porPersona = {};
+        registros.forEach(r => {
+            const lbl = etiquetaPersona(r);
+            porPersona[lbl] = (porPersona[lbl] || 0) + 1;
         });
+
+        const statsEl = document.getElementById("statsPersonal");
+        if (Object.keys(porPersona).length === 0) {
+            statsEl.innerHTML = '<span style="color:#aaa;font-size:13px">Sin registros</span>';
+        } else {
+            statsEl.innerHTML = Object.entries(porPersona)
+                .sort((a, b) => b[1] - a[1])
+                .map(([lbl, cnt]) => `
+                    <div class="stat-persona-badge">
+                        ${lbl}
+                        <span class="cnt">${cnt}</span>
+                    </div>
+                `).join('');
+        }
+
+        // Tabla con botón eliminar
+        if (registros.length === 0) {
+            tabla.innerHTML = `<tr><td colspan="6"><div class="empty-state"><span class="icon">📭</span>No hay registros para este mes.</div></td></tr>`;
+        } else {
+            tabla.innerHTML = registros.map(reg => `
+                <tr>
+                    <td><b>${reg.fecha}</b><br><small style="color:#888">${reg.hora}</small></td>
+                    <td><b>${reg.docente}</b></td>
+                    <td><span class="badge-grado">${reg.grado} ${['DIRECTIVOS','PSICÓLOGO (A)','VISITA EXTERNA'].includes(reg.seccion) ? '' : reg.seccion}</span></td>
+                    <td>${reg.tema}</td>
+                    <td style="color:#666">${reg.observaciones}</td>
+                    <td style="text-align:center">
+                        <button class="btn-eliminar"
+                            onclick="eliminarRegistro('${reg._key}', '${reg.docente.replace(/'/g,"\\'")} — ${reg.fecha}')">
+                            🗑️ Eliminar
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Gráfico con etiqueta Nombre Grado Sección
+        const conteoGrafico = {};
+        registros.forEach(r => {
+            const lbl = etiquetaPersona(r);
+            conteoGrafico[lbl] = (conteoGrafico[lbl] || 0) + 1;
+        });
+
+        const etiquetas = Object.entries(conteoGrafico).sort((a,b) => b[1]-a[1]).map(e => e[0]);
+        const valores   = etiquetas.map(e => conteoGrafico[e]);
+
+        const ctx = document.getElementById('graficoAsistencia').getContext('2d');
+        if (miChart) miChart.destroy();
+        miChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: etiquetas,
+                datasets: [{
+                    label: 'Atenciones en el mes',
+                    data: valores,
+                    backgroundColor: etiquetas.map((_, i) => `hsl(${210 + i * 15}, 70%, ${55 + i * 2}%)`),
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} atención(es)` } }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f0f0f0' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    })
+    .catch(err => {
+        console.error(err);
+        tabla.innerHTML = "<tr><td colspan='6' style='text-align:center;color:red'>❌ Error al cargar los datos</td></tr>";
+    });
+}
+
+// ===== DESCARGAR PDF =====
+async function descargarPDF() {
+    const mes = document.getElementById("mesFiltro").value;
+    const mesLabel = mes ? new Date(mes + '-01').toLocaleDateString('es-PE', { year: 'numeric', month: 'long' }) : 'informe';
+    const btn = document.querySelector('.btn-imprimir');
+    btn.disabled = true;
+    btn.textContent = '⏳ Generando PDF...';
+
+    // Ocultar botones de eliminar temporalmente
+    document.querySelectorAll('.btn-eliminar').forEach(b => b.style.visibility = 'hidden');
+    // Ocultar columna acción en el thead
+    document.querySelectorAll('thead th:last-child').forEach(th => th.style.visibility = 'hidden');
+    // Ocultar botones que no deben aparecer en el PDF
+    const btnCerrar = document.querySelector('.btn-cerrar');
+    const filtroMensual = document.querySelector('.filtro-mensual');
+    if (btnCerrar) btnCerrar.style.display = 'none';
+    if (filtroMensual) filtroMensual.style.display = 'none';
+
+    const { jsPDF } = window.jspdf;
+    const panel = document.getElementById('panelAdmin');
+
+    try {
+        const canvas = await html2canvas(panel, {
+            scale: 1.8,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            scrollY: -window.scrollY,
+            windowWidth: panel.scrollWidth,
+            windowHeight: panel.scrollHeight
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.92);
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pageW = pdf.internal.pageSize.getWidth();
+        const pageH = pdf.internal.pageSize.getHeight();
+        const margin = 10;
+        const usableW = pageW - margin * 2;
+        const imgW = canvas.width;
+        const imgH = canvas.height;
+        const ratio = usableW / imgW;
+        const totalH = imgH * ratio;
+        let posY = 0;
+        let page = 0;
+
+        while (posY < totalH) {
+            if (page > 0) pdf.addPage();
+            const sliceH = Math.min(pageH - margin * 2, totalH - posY);
+            const srcY = posY / ratio;
+            const srcH = sliceH / ratio;
+
+            const sliceCanvas = document.createElement('canvas');
+            sliceCanvas.width = imgW;
+            sliceCanvas.height = srcH;
+            const ctx2 = sliceCanvas.getContext('2d');
+            ctx2.drawImage(canvas, 0, srcY, imgW, srcH, 0, 0, imgW, srcH);
+            const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.92);
+            pdf.addImage(sliceData, 'JPEG', margin, margin, usableW, sliceH);
+
+            posY += sliceH;
+            page++;
+        }
+
+        pdf.save(`Informe_Atenciones_${mesLabel.replace(/ /g,'_')}.pdf`);
+        toast("✅ PDF descargado correctamente");
+    } catch (e) {
+        console.error(e);
+        toast("❌ Error al generar el PDF");
+    } finally {
+        document.querySelectorAll('.btn-eliminar').forEach(b => b.style.visibility = '');
+        document.querySelectorAll('thead th:last-child').forEach(th => th.style.visibility = '');
+        if (btnCerrar) btnCerrar.style.display = '';
+        if (filtroMensual) filtroMensual.style.display = '';
+        btn.disabled = false;
+        btn.textContent = '📥 Descargar PDF';
+    }
 }
 
 // ===== TOAST =====
